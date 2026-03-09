@@ -10,6 +10,7 @@ $versionFile = Join-Path $projectRoot 'VERSION'
 $frontendVersionFile = Join-Path $projectRoot 'public/version.json'
 $frontendIndexFile = Join-Path $projectRoot 'public/index.html'
 $changelogFile = Join-Path $projectRoot 'CHANGELOG.md'
+$packageFile = Join-Path $projectRoot 'package.json'
 
 $currentVersionRaw = (Get-Content -Path $versionFile -Raw).Trim()
 $currentVersion = $currentVersionRaw -replace '^V', ''
@@ -36,6 +37,10 @@ $versionJson = @{
     version = $newVersion
 } | ConvertTo-Json
 Set-Content -Path $frontendVersionFile -Value "$versionJson`n" -Encoding UTF8
+
+$package = Get-Content -Path $packageFile -Raw | ConvertFrom-Json
+$package.version = "$major.$minor.$patch"
+$package | ConvertTo-Json -Depth 10 | Set-Content -Path $packageFile -Encoding UTF8
 
 $indexHtml = Get-Content -Path $frontendIndexFile -Raw
 $indexHtml = [regex]::Replace($indexHtml, '>V\d+\.\d+\.\d+<', ">$newVersion<")

@@ -53,6 +53,40 @@
             align-items: center;
             gap: 12px;
         }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .language-select {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-size: 13px;
+        }
+
+        .language-select option {
+            color: var(--text-dark);
+        }
+
+        .header-action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .header-action-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
         
         .workspace-name {
             font-size: 18px;
@@ -458,6 +492,11 @@
                 align-items: flex-start;
                 gap: 4px;
             }
+
+            .header-right {
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
         }
     </style>
 </head>
@@ -465,13 +504,20 @@
     <!-- Header -->
     <div class="header">
         <div class="header-left">
-            <div class="workspace-name">âš¡ SlackwareAlbert</div>
+            <div class="workspace-name">SlackwareAlbert</div>
             <div class="user-badge">
                 <span class="status-indicator"></span>
                 <span id="currentUsername">Usuario</span>
             </div>
         </div>
-        <div style="font-size: 12px; opacity: 0.8;" id="appVersion">V1.0.1</div>
+        <div class="header-right">
+            <button class="header-action-btn" onclick="app.showUserModal()" data-i18n="btn.changeUser">Cambiar usuario</button>
+            <select class="language-select" id="languageSelect" onchange="app.changeLanguage(this.value)">
+                <option value="es">Espanol</option>
+                <option value="en">English</option>
+            </select>
+            <div style="font-size: 12px; opacity: 0.8;" id="appVersion">V1.1.0</div>
+        </div>
     </div>
     
     <!-- Main Container -->
@@ -479,11 +525,11 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-title">Canales</div>
-                <button class="new-channel-btn" onclick="app.showNewChannelModal()">+ Nuevo Canal</button>
+                <div class="sidebar-title" data-i18n="sidebar.channels">Canales</div>
+                <button class="new-channel-btn" onclick="app.showNewChannelModal()" data-i18n="btn.newChannel">+ Nuevo Canal</button>
             </div>
             <div class="channels-list" id="channelsList">
-                <div class="loading">Cargando canales...</div>
+                <div class="loading" data-i18n="loading.channels">Cargando canales...</div>
             </div>
         </div>
         
@@ -491,22 +537,23 @@
         <div class="chat-container">
             <div class="chat-header">
                 <div class="channel-name" id="channelName"># general</div>
-                <div class="channel-desc" id="channelDesc">Canal general</div>
+                <div class="channel-desc" id="channelDesc" data-i18n="channel.defaultDesc">Canal general</div>
             </div>
             
             <div class="messages-container" id="messagesContainer">
-                <div class="loading">Cargando mensajes...</div>
+                <div class="loading" data-i18n="loading.messages">Cargando mensajes...</div>
             </div>
             
             <div class="message-input-container">
                 <div class="message-input-wrapper">
                     <textarea 
                         id="messageInput" 
-                        placeholder="Escribe tu mensaje..." 
+                        placeholder="Escribe tu mensaje..."
+                        data-i18n-placeholder="input.message"
                         rows="1"
                         onkeydown="app.handleMessageKeydown(event)"
                     ></textarea>
-                    <button class="send-btn" onclick="app.sendMessage()">Enviar</button>
+                    <button class="send-btn" onclick="app.sendMessage()" data-i18n="btn.send">Enviar</button>
                 </div>
             </div>
         </div>
@@ -515,35 +562,65 @@
     <!-- New Channel Modal -->
     <div class="modal" id="newChannelModal">
         <div class="modal-content">
-            <h2 class="modal-title">Crear Nuevo Canal</h2>
+            <h2 class="modal-title" data-i18n="modal.newChannel.title">Crear Nuevo Canal</h2>
             <form onsubmit="app.createChannel(event)">
                 <div class="form-group">
-                    <label class="form-label" for="channelNameInput">Nombre del Canal</label>
+                    <label class="form-label" for="channelNameInput" data-i18n="modal.newChannel.nameLabel">Nombre del Canal</label>
                     <input 
                         type="text" 
                         id="channelNameInput" 
                         class="form-input" 
                         placeholder="ej: desarrollo"
+                        data-i18n-placeholder="modal.newChannel.namePlaceholder"
                         required
                     />
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="channelDescInput">DescripciÃ³n</label>
+                    <label class="form-label" for="channelDescInput" data-i18n="modal.newChannel.descLabel">Descripcion</label>
                     <textarea 
                         id="channelDescInput" 
                         class="form-textarea" 
-                        placeholder="Describe el propÃ³sito de este canal..."
+                        placeholder="Describe el proposito de este canal..."
+                        data-i18n-placeholder="modal.newChannel.descPlaceholder"
                     ></textarea>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="app.hideNewChannelModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Crear Canal</button>
+                    <button type="button" class="btn btn-secondary" onclick="app.hideNewChannelModal()" data-i18n="btn.cancel">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="btn.createChannel">Crear Canal</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- User Modal -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <h2 class="modal-title" data-i18n="modal.user.title">Elegir o crear usuario</h2>
+            <form onsubmit="app.saveUser(event)">
+                <div class="form-group">
+                    <label class="form-label" for="existingUserSelect" data-i18n="modal.user.existingLabel">Usuario existente</label>
+                    <select id="existingUserSelect" class="form-input"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="newUsernameInput" data-i18n="modal.user.newLabel">Nuevo usuario</label>
+                    <input
+                        type="text"
+                        id="newUsernameInput"
+                        class="form-input"
+                        maxlength="50"
+                        placeholder="ej: DevAlbert"
+                        data-i18n-placeholder="modal.user.newPlaceholder"
+                    />
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideUserModal()" data-i18n="btn.cancel">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="btn.save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="./app.js"></script>
 </body>
 </html>
 

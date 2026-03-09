@@ -1,32 +1,99 @@
 /**
  * SlackwareAlbert - Frontend Application
  * Cliente JavaScript para interactuar con la API REST
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const app = {
-    // Configuración
     apiBaseUrl: '../api/index.php',
     currentChannel: null,
     currentUsername: 'Usuario',
     lastMessageId: 0,
     pollInterval: null,
-    
-    /**
-     * Inicializa la aplicación
-     */
-    async init() {
-        await this.loadVersion();
+    channels: [],
+    users: [],
+    language: 'es',
+    i18n: {
+        es: {
+            'btn.changeUser': 'Cambiar usuario',
+            'btn.newChannel': '+ Nuevo Canal',
+            'btn.send': 'Enviar',
+            'btn.cancel': 'Cancelar',
+            'btn.createChannel': 'Crear Canal',
+            'btn.save': 'Guardar',
+            'sidebar.channels': 'Canales',
+            'loading.channels': 'Cargando canales...',
+            'loading.messages': 'Cargando mensajes...',
+            'channel.defaultDesc': 'Canal general',
+            'input.message': 'Escribe tu mensaje...',
+            'modal.newChannel.title': 'Crear Nuevo Canal',
+            'modal.newChannel.nameLabel': 'Nombre del Canal',
+            'modal.newChannel.namePlaceholder': 'ej: desarrollo',
+            'modal.newChannel.descLabel': 'Descripcion',
+            'modal.newChannel.descPlaceholder': 'Describe el proposito de este canal...',
+            'modal.user.title': 'Elegir o crear usuario',
+            'modal.user.existingLabel': 'Usuario existente',
+            'modal.user.newLabel': 'Nuevo usuario',
+            'modal.user.newPlaceholder': 'ej: DevAlbert',
+            'state.noChannels': 'No hay canales',
+            'state.channelsError': 'Error al cargar canales',
+            'state.noMessagesTitle': 'Sin mensajes aun',
+            'state.noMessagesText': 'Se el primero en escribir en este canal',
+            'state.messagesError': 'Error al cargar mensajes',
+            'notify.channelCreated': 'Canal creado correctamente',
+            'notify.userUpdated': 'Usuario actualizado',
+            'notify.userCreated': 'Usuario creado correctamente',
+            'notify.sendError': 'Error al enviar mensaje',
+            'notify.channelError': 'Error al crear canal',
+            'notify.userError': 'Error al guardar usuario',
+            'generic.noDescription': 'Sin descripcion',
+            'generic.selectUser': 'Selecciona un usuario'
+        },
+        en: {
+            'btn.changeUser': 'Change user',
+            'btn.newChannel': '+ New Channel',
+            'btn.send': 'Send',
+            'btn.cancel': 'Cancel',
+            'btn.createChannel': 'Create Channel',
+            'btn.save': 'Save',
+            'sidebar.channels': 'Channels',
+            'loading.channels': 'Loading channels...',
+            'loading.messages': 'Loading messages...',
+            'channel.defaultDesc': 'General channel',
+            'input.message': 'Write your message...',
+            'modal.newChannel.title': 'Create New Channel',
+            'modal.newChannel.nameLabel': 'Channel Name',
+            'modal.newChannel.namePlaceholder': 'eg: development',
+            'modal.newChannel.descLabel': 'Description',
+            'modal.newChannel.descPlaceholder': 'Describe the purpose of this channel...',
+            'modal.user.title': 'Choose or create user',
+            'modal.user.existingLabel': 'Existing user',
+            'modal.user.newLabel': 'New user',
+            'modal.user.newPlaceholder': 'eg: DevAlbert',
+            'state.noChannels': 'No channels available',
+            'state.channelsError': 'Failed to load channels',
+            'state.noMessagesTitle': 'No messages yet',
+            'state.noMessagesText': 'Be the first to write in this channel',
+            'state.messagesError': 'Failed to load messages',
+            'notify.channelCreated': 'Channel created successfully',
+            'notify.userUpdated': 'User updated',
+            'notify.userCreated': 'User created successfully',
+            'notify.sendError': 'Error sending message',
+            'notify.channelError': 'Error creating channel',
+            'notify.userError': 'Error saving user',
+            'generic.noDescription': 'No description',
+            'generic.selectUser': 'Select a user'
+        }
+    },
 
-        // Obtener o crear username
-        this.currentUsername = localStorage.getItem('slackware_username') || this.generateUsername();
-        localStorage.setItem('slackware_username', this.currentUsername);
-        document.getElementById('currentUsername').textContent = this.currentUsername;
-        
-        // Cargar canales
+    async init() {
+        this.loadLanguagePreference();
+        this.applyTranslations();
+        await this.loadVersion();
+        await this.loadUsers();
+        await this.ensureCurrentUser();
         await this.loadChannels();
-        
-        // Auto-resize textarea
+
         const textarea = document.getElementById('messageInput');
         textarea.addEventListener('input', () => {
             textarea.style.height = 'auto';
@@ -52,16 +119,173 @@ const app = {
             console.warn('No se pudo cargar version.json:', error);
         }
     },
+
+    loadLanguagePreference() {
+        const saved = localStorage.getItem('slackware_lang');
+        if (saved && this.i18n[saved]) {
+            this.language = saved;
+        }
+
+        const selector = document.getElementById('languageSelect');
+        if (selector) {
+            selector.value = this.language;
+        }
+    },
+
+    changeLanguage(nextLanguage) {
+        if (!this.i18n[nextLanguage]) {
+            return;
+        }
+        this.language = nextLanguage;
+        localStorage.setItem('slackware_lang', nextLanguage);
+        this.applyTranslations();
+        this.refreshHeaderTexts();
+        this.renderChannels();
+        this.loadMessages();
+    },
+
+    t(key) {
+        const table = this.i18n[this.language] || this.i18n.es;
+        return table[key] || key;
+    },
+
+    applyTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach((el) => {
+            const key = el.getAttribute('data-i18n');
+            el.textContent = this.t(key);
+        });
+
+        document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            el.setAttribute('placeholder', this.t(key));
+        });
+    },
+
+    refreshHeaderTexts() {
+        if (this.currentChannel) {
+            document.getElementById('channelDesc').textContent = this.currentChannel.description || this.t('generic.noDescription');
+        }
+    },
     
     /**
      * Genera un nombre de usuario aleatorio
      */
     generateUsername() {
-        const adjectives = ['Rápido', 'Veloz', 'Feliz', 'Brillante', 'Astuto', 'Valiente'];
-        const nouns = ['Panda', 'Tigre', 'Delfín', 'Águila', 'Lobo', 'Zorro'];
+        const adjectives = ['Rapido', 'Veloz', 'Feliz', 'Brillante', 'Astuto', 'Valiente'];
+        const nouns = ['Panda', 'Tigre', 'Delfin', 'Aguila', 'Lobo', 'Zorro'];
         const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
         const noun = nouns[Math.floor(Math.random() * nouns.length)];
         return `${adj}${noun}${Math.floor(Math.random() * 100)}`;
+    },
+
+    async fetchJson(url, options = {}) {
+        const response = await fetch(url, options);
+        let data;
+
+        try {
+            data = await response.json();
+        } catch (error) {
+            throw new Error('Respuesta invalida del servidor');
+        }
+
+        if (!response.ok) {
+            const msg = data.error || 'Error de servidor';
+            throw new Error(msg);
+        }
+
+        return data;
+    },
+
+    async loadUsers() {
+        this.users = await this.fetchJson(`${this.apiBaseUrl}?action=users`);
+        this.fillUsersSelect();
+    },
+
+    fillUsersSelect() {
+        const select = document.getElementById('existingUserSelect');
+        if (!select) {
+            return;
+        }
+
+        select.innerHTML = `<option value="">${this.escapeHtml(this.t('generic.selectUser'))}</option>`;
+
+        this.users.forEach((user) => {
+            const option = document.createElement('option');
+            option.value = user.username;
+            option.textContent = user.username;
+            select.appendChild(option);
+        });
+
+        if (this.currentUsername) {
+            select.value = this.currentUsername;
+        }
+    },
+
+    async ensureCurrentUser() {
+        const savedUsername = localStorage.getItem('slackware_username');
+
+        if (savedUsername && this.users.some((user) => user.username === savedUsername)) {
+            this.currentUsername = savedUsername;
+        } else if (this.users.length > 0) {
+            this.currentUsername = this.users[0].username;
+            localStorage.setItem('slackware_username', this.currentUsername);
+        } else {
+            const generatedUsername = this.generateUsername();
+            await this.createUser(generatedUsername);
+            this.currentUsername = generatedUsername;
+            localStorage.setItem('slackware_username', this.currentUsername);
+            await this.loadUsers();
+        }
+
+        document.getElementById('currentUsername').textContent = this.currentUsername;
+    },
+
+    showUserModal() {
+        this.fillUsersSelect();
+        const input = document.getElementById('newUsernameInput');
+        input.value = '';
+        document.getElementById('userModal').classList.add('active');
+    },
+
+    hideUserModal() {
+        document.getElementById('userModal').classList.remove('active');
+    },
+
+    async saveUser(event) {
+        event.preventDefault();
+
+        const selected = document.getElementById('existingUserSelect').value.trim();
+        const newUsername = document.getElementById('newUsernameInput').value.trim();
+
+        try {
+            if (newUsername) {
+                await this.createUser(newUsername);
+                this.currentUsername = newUsername;
+                await this.loadUsers();
+                alert(this.t('notify.userCreated'));
+            } else if (selected) {
+                this.currentUsername = selected;
+                alert(this.t('notify.userUpdated'));
+            } else {
+                return;
+            }
+
+            localStorage.setItem('slackware_username', this.currentUsername);
+            document.getElementById('currentUsername').textContent = this.currentUsername;
+            this.hideUserModal();
+        } catch (error) {
+            alert(`${this.t('notify.userError')}: ${error.message}`);
+        }
+    },
+
+    async createUser(username) {
+        await this.fetchJson(`${this.apiBaseUrl}?action=users`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username })
+        });
     },
     
     /**
@@ -69,63 +293,53 @@ const app = {
      */
     async loadChannels() {
         try {
-            const response = await fetch(`${this.apiBaseUrl}?action=channels`);
-            const channels = await response.json();
-            
-            const container = document.getElementById('channelsList');
-            container.innerHTML = '';
-            
-            if (channels.length === 0) {
-                container.innerHTML = '<div class="empty-state">No hay canales</div>';
-                return;
-            }
-            
-            channels.forEach(channel => {
-                const item = document.createElement('div');
-                item.className = 'channel-item';
-                if (this.currentChannel && this.currentChannel.id === channel.id) {
-                    item.classList.add('active');
-                }
-                item.innerHTML = `
-                    <span class="channel-prefix">#</span>
-                    <span>${this.escapeHtml(channel.name)}</span>
-                `;
-                item.onclick = (event) => this.selectChannel(channel, event);
-                container.appendChild(item);
-            });
-            
-            // Seleccionar primer canal por defecto
-            if (!this.currentChannel && channels.length > 0) {
-                this.selectChannel(channels[0]);
+            this.channels = await this.fetchJson(`${this.apiBaseUrl}?action=channels`);
+            this.renderChannels();
+
+            if (!this.currentChannel && this.channels.length > 0) {
+                await this.selectChannel(this.channels[0]);
             }
         } catch (error) {
             console.error('Error al cargar canales:', error);
-            document.getElementById('channelsList').innerHTML = '<div class="empty-state">Error al cargar canales</div>';
+            document.getElementById('channelsList').innerHTML = `<div class="empty-state">${this.escapeHtml(this.t('state.channelsError'))}</div>`;
         }
+    },
+
+    renderChannels() {
+        const container = document.getElementById('channelsList');
+        container.innerHTML = '';
+
+        if (this.channels.length === 0) {
+            container.innerHTML = `<div class="empty-state">${this.escapeHtml(this.t('state.noChannels'))}</div>`;
+            return;
+        }
+
+        this.channels.forEach((channel) => {
+            const item = document.createElement('div');
+            item.className = 'channel-item';
+            if (this.currentChannel && this.currentChannel.id === channel.id) {
+                item.classList.add('active');
+            }
+            item.innerHTML = `
+                <span class="channel-prefix">#</span>
+                <span>${this.escapeHtml(channel.name)}</span>
+            `;
+            item.onclick = () => this.selectChannel(channel);
+            container.appendChild(item);
+        });
     },
     
     /**
      * Selecciona un canal
      */
-    async selectChannel(channel, clickEvent) {
+    async selectChannel(channel) {
         this.currentChannel = channel;
         this.lastMessageId = 0;
         
         // Actualizar UI
         document.getElementById('channelName').textContent = `# ${channel.name}`;
-        document.getElementById('channelDesc').textContent = channel.description || 'Sin descripción';
-        
-        // Actualizar clase active en sidebar
-        document.querySelectorAll('.channel-item').forEach(item => {
-            item.classList.remove('active');
-        });
-
-        if (clickEvent && clickEvent.target) {
-            const selected = clickEvent.target.closest('.channel-item');
-            if (selected) {
-                selected.classList.add('active');
-            }
-        }
+        document.getElementById('channelDesc').textContent = channel.description || this.t('generic.noDescription');
+        this.renderChannels();
         
         // Detener polling anterior
         if (this.pollInterval) {
@@ -146,14 +360,13 @@ const app = {
         if (!this.currentChannel) return;
         
         try {
-            const response = await fetch(`${this.apiBaseUrl}?action=messages&channel_id=${this.currentChannel.id}`);
-            const messages = await response.json();
+            const messages = await this.fetchJson(`${this.apiBaseUrl}?action=messages&channel_id=${this.currentChannel.id}`);
             
             const container = document.getElementById('messagesContainer');
             container.innerHTML = '';
             
             if (messages.length === 0) {
-                container.innerHTML = '<div class="empty-state"><h3>Sin mensajes aún</h3><p>Sé el primero en escribir en este canal</p></div>';
+                container.innerHTML = `<div class="empty-state"><h3>${this.escapeHtml(this.t('state.noMessagesTitle'))}</h3><p>${this.escapeHtml(this.t('state.noMessagesText'))}</p></div>`;
                 return;
             }
             
@@ -167,7 +380,7 @@ const app = {
             this.scrollToBottom();
         } catch (error) {
             console.error('Error al cargar mensajes:', error);
-            document.getElementById('messagesContainer').innerHTML = '<div class="empty-state">Error al cargar mensajes</div>';
+            document.getElementById('messagesContainer').innerHTML = `<div class="empty-state">${this.escapeHtml(this.t('state.messagesError'))}</div>`;
         }
     },
     
@@ -178,8 +391,7 @@ const app = {
         if (!this.currentChannel) return;
         
         try {
-            const response = await fetch(`${this.apiBaseUrl}?action=poll&channel_id=${this.currentChannel.id}&after_id=${this.lastMessageId}`);
-            const messages = await response.json();
+            const messages = await this.fetchJson(`${this.apiBaseUrl}?action=poll&channel_id=${this.currentChannel.id}&after_id=${this.lastMessageId}`);
             
             if (messages.length > 0) {
                 messages.forEach(message => {
@@ -211,7 +423,8 @@ const app = {
         messageEl.className = 'message';
         messageEl.dataset.id = message.id;
         
-        const time = new Date(message.created_at).toLocaleTimeString('es-ES', {
+        const locale = this.language === 'en' ? 'en-US' : 'es-ES';
+        const time = new Date(message.created_at).toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -244,7 +457,7 @@ const app = {
         if (!message) return;
         
         try {
-            const response = await fetch(`${this.apiBaseUrl}?action=messages`, {
+            const result = await this.fetchJson(`${this.apiBaseUrl}?action=messages`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -256,8 +469,6 @@ const app = {
                 })
             });
             
-            const result = await response.json();
-            
             if (result.success) {
                 input.value = '';
                 input.style.height = 'auto';
@@ -265,7 +476,7 @@ const app = {
             }
         } catch (error) {
             console.error('Error al enviar mensaje:', error);
-            alert('Error al enviar mensaje');
+            alert(`${this.t('notify.sendError')}: ${error.message}`);
         }
     },
     
@@ -308,7 +519,7 @@ const app = {
         if (!name) return;
         
         try {
-            const response = await fetch(`${this.apiBaseUrl}?action=channels`, {
+            const result = await this.fetchJson(`${this.apiBaseUrl}?action=channels`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -319,15 +530,14 @@ const app = {
                 })
             });
             
-            const result = await response.json();
-            
             if (result.success) {
                 this.hideNewChannelModal();
                 await this.loadChannels();
+                alert(this.t('notify.channelCreated'));
             }
         } catch (error) {
             console.error('Error al crear canal:', error);
-            alert('Error al crear canal');
+            alert(`${this.t('notify.channelError')}: ${error.message}`);
         }
     },
     

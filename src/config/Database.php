@@ -49,6 +49,12 @@ class Database {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
         
         CREATE INDEX IF NOT EXISTS idx_messages_channel_created ON messages(channel_id, created_at DESC);
         ";
@@ -58,6 +64,9 @@ class Database {
         // Canal general por defecto
         $stmt = $this->pdo->prepare("INSERT OR IGNORE INTO channels (name, description) VALUES (?, ?)");
         $stmt->execute(['general', 'Canal general para toda la comunidad']);
+
+        $stmt = $this->pdo->prepare("INSERT OR IGNORE INTO users (username) VALUES (?)");
+        $stmt->execute(['Albert']);
     }
     
     public static function getInstance() {

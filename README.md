@@ -1,87 +1,117 @@
 # SlackwareAlbert
 
-Aplicación de chat en tiempo real estilo Slack, desarrollada en PHP con arquitectura separada de backend y frontend.
+Chat estilo Slack con backend PHP (API REST) y frontend JavaScript, con persistencia SQLite.
 
-Version actual: `V1.0.0`
+Version actual: `V1.1.0`
 
-## Características
+## Funcionalidades
 
-- Canales de chat (`#general` y canales personalizados).
-- Mensajería en tiempo real mediante polling.
-- Backend PHP con API REST modular.
-- Frontend desacoplado con JavaScript puro.
-- Persistencia local con SQLite.
-- Versionado semántico visible en la app y repositorio.
-- Build automatizado con inclusión de favicon `.ico`.
+- Canales de chat (listar y crear).
+- Mensajes en tiempo real por polling.
+- Gestion de usuarios (crear y seleccionar usuario activo).
+- Interfaz multilenguaje (Espanol / English).
+- Persistencia local con SQLite (`data/slackware.db`).
+- Versionado semantico sincronizado en app y repositorio.
 
-## Arquitectura
+## Estructura del proyecto
 
-- `api/`: Punto de entrada de la API REST.
-- `src/config/`: Configuración de base de datos.
-- `src/models/`: Modelos de dominio (`Channel`, `Message`).
-- `src/controllers/`: Controladores de la API.
-- `public/`: Frontend estático (`index.html`, `app.js`, `manifest.json`).
-- `data/`: Base de datos SQLite en tiempo de ejecución (ignorado por git).
-- `.github/workflows/`: CI/CD y publicación de releases.
+- `index.php`: entry point, redirecciona a `public/`.
+- `api/index.php`: entry point de la API.
+- `src/config/Database.php`: conexion e inicializacion de tablas.
+- `src/controllers/ApiController.php`: rutas y respuestas JSON.
+- `src/models/Channel.php`: modelo de canales.
+- `src/models/Message.php`: modelo de mensajes.
+- `src/models/User.php`: modelo de usuarios.
+- `public/index.html`: interfaz principal.
+- `public/app.js`: logica frontend.
+- `public/version.json`: version visible en UI.
+- `VERSION`: version canonica (`Vx.x.x`).
+- `CHANGELOG.md`: historial de cambios.
 
 ## Requisitos
 
-- PHP 8.0+ (recomendado). Funciona con PHP 7.4+.
-- Extensión `pdo_sqlite` habilitada.
-- PowerShell 5.1+ para scripts de build/versionado.
+- PHP 7.4+ (recomendado PHP 8.x).
+- Extension `pdo_sqlite` habilitada.
+- Navegador moderno.
+- Node.js (solo para scripts de build/versionado).
 
-## Ejecución local
+## Ejecucion local
 
-1. Coloca el proyecto en tu servidor local (EasyPHP).
-2. Abre:
+1. Coloca el proyecto en tu servidor local (por ejemplo EasyPHP).
+2. Abre en el navegador:
    - App: `http://localhost:888/monitoreos/SlackwareAlbert/`
-   - API: `http://localhost:888/monitoreos/SlackwareAlbert/api/index.php?action=channels`
+   - API health rapido: `http://localhost:888/monitoreos/SlackwareAlbert/api/index.php?action=channels`
+
+## API REST
+
+Base URL: `../api/index.php?action=...`
+
+### Canales
+
+- `GET action=channels`: lista canales.
+- `POST action=channels`: crea canal.
+  - Body JSON: `{ "name": "dev", "description": "Canal de desarrollo" }`
+
+### Mensajes
+
+- `GET action=messages&channel_id=1`: lista mensajes del canal.
+- `POST action=messages`: crea mensaje.
+  - Body JSON: `{ "channel_id": 1, "username": "Albert", "message": "Hola" }`
+- `GET action=poll&channel_id=1&after_id=10`: trae mensajes nuevos.
+
+### Usuarios
+
+- `GET action=users`: lista usuarios.
+- `POST action=users`: crea usuario.
+  - Body JSON: `{ "username": "DevAlbert" }`
+
+## Versionado y buenas practicas
+
+Se usa SemVer con formato visual `Vx.x.x`.
+
+Version sincronizada en:
+
+- `VERSION`
+- `package.json`
+- `public/version.json`
+- `public/index.html` (badge de version)
+- `CHANGELOG.md`
+
+Politica recomendada:
+
+1. Antes de cada commit, incrementar version (`patch`, `minor` o `major`).
+2. Actualizar changelog con cambios reales.
+3. Hacer commit incluyendo todos los archivos de version.
+
+Comandos:
+
+```powershell
+npm run version:patch
+npm run version:minor
+npm run version:major
+```
 
 ## Build
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
+npm run build
 ```
 
-Resultado:
+Genera `dist/` con archivos listos para despliegue.
 
-- Genera carpeta `dist/` lista para despliegue estático.
-- Incluye el ícono `.ico` existente del proyecto.
-- Copia `public`, `api`, `src` e `index.php`.
+## Dependencias
 
-## Versionado
+Dependencias runtime de app:
 
-Formato: `Vx.x.x`.
+- PHP + PDO SQLite.
+- JavaScript vanilla (sin frameworks).
 
-- La versión vive en:
-  - `VERSION`
-  - `public/version.json`
-  - Cabecera visible de la app (`public/index.html`)
-- Cada commit en `main` debe crear una nueva versión.
+Dependencias de tooling:
 
-Comandos disponibles:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\bump-version.ps1 -Type patch
-powershell -ExecutionPolicy Bypass -File .\scripts\bump-version.ps1 -Type minor
-powershell -ExecutionPolicy Bypass -File .\scripts\bump-version.ps1 -Type major
-```
-
-## Publicación en GitHub Pages
-
-El workflow hace release automático en cada push a `main`.
-
-Para sitio estático, puedes publicar `dist/public` en GitHub Pages (rama `gh-pages` o workflow adicional).
-
-## Buenas prácticas aplicadas
-
-- Separación de responsabilidades (controladores, modelos, configuración).
-- Validación básica de entradas en backend.
-- Prevención XSS en frontend con escape HTML.
-- Estructura de proyecto mantenible.
-- Documentación y licencia estándar.
+- Node.js (scripts locales en `scripts/`).
 
 ## Licencia
 
-Este proyecto está licenciado bajo **Apache License 2.0**.
-Consulta `LICENSE` para el texto completo.
+Este proyecto usa **Apache License 2.0**.
+
+Ver archivo `LICENSE`.

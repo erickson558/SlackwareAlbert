@@ -15,3 +15,14 @@
 
 - ActualizaciÃ³n de versiÃ³n automÃ¡tica (patch).
 
+## V1.1.0 - 2026-03-09
+
+- Corregido entry point principal: `index.php` ahora redirige a `public/` para resolver rutas relativas y evitar bloqueo en "Cargando mensajes...".
+- Agregado soporte de usuarios persistentes en backend con nuevo modelo `User` y endpoint `action=users` (GET/POST).
+- Agregada tabla `users` en SQLite con usuario semilla por defecto (`Albert`).
+- Mejorado manejo de errores de API (validaciones y conflictos por datos duplicados).
+- Frontend actualizado para crear/seleccionar usuario desde modal.
+- Frontend actualizado para crear canales con mensajes de resultado.
+- Incorporado soporte de idiomas (Espanol/Ingles) con selector en UI.
+- Alineado versionado semantico en `VERSION`, `package.json`, `public/version.json`, UI y documentacion.
+

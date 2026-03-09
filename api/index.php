@@ -2,7 +2,7 @@
 /**
  * SlackwareAlbert - API Entry Point
  * Endpoint principal de la API REST
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 // Autoloader simple para las clases

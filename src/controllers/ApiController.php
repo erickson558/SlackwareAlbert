@@ -8,14 +8,17 @@ namespace SlackwareAlbert\Controllers;
 
 use SlackwareAlbert\Models\Channel;
 use SlackwareAlbert\Models\Message;
+use SlackwareAlbert\Models\User;
 
 class ApiController {
     private $channel;
     private $message;
+    private $user;
     
     public function __construct() {
         $this->channel = new Channel();
         $this->message = new Message();
+        $this->user = new User();
     }
     
     /**
@@ -46,11 +49,43 @@ class ApiController {
                 case 'poll':
                     $this->handlePoll();
                     break;
+                case 'users':
+                    $this->handleUsers($method);
+                    break;
                 default:
                     $this->sendError('Endpoint no encontrado', 404);
             }
+        } catch (\InvalidArgumentException $e) {
+            $this->sendError($e->getMessage(), 400);
+        } catch (\PDOException $e) {
+            if (strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
+                $this->sendError('Este valor ya existe', 409);
+                return;
+            }
+            $this->sendError('Error de base de datos', 500);
         } catch (\Exception $e) {
             $this->sendError($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Gestiona operaciones sobre usuarios
+     */
+    private function handleUsers($method) {
+        switch ($method) {
+            case 'GET':
+                $this->sendResponse($this->user->getAll());
+                break;
+
+            case 'POST':
+                $data = json_decode(file_get_contents('php://input'), true);
+                $username = isset($data['username']) ? $data['username'] : '';
+                $id = $this->user->create($username);
+                $this->sendResponse(['id' => $id, 'success' => true], 201);
+                break;
+
+            default:
+                $this->sendError('Método no permitido', 405);
         }
     }
     
