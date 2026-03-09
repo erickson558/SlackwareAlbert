@@ -1,0 +1,16 @@
+{
+  "name": "SlackwareAlbert",
+  "short_name": "Slackware",
+  "description": "Chat en tiempo real estilo Slack desarrollado en PHP.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1d1c1d",
+  "theme_color": "#611f69",
+  "icons": [
+    {
+      "src": "../social_media_social_network_logo_message_logotype_logos_chat_whatsapp_red_icon-icons.com_61223.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

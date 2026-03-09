@@ -1,0 +1,15 @@
+# Runtime
+/data/
+*.db
+*.sqlite
+
+# Build output
+/dist/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Node (solo para build/release scripts)
+node_modules/

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SlackwareAlbert - Chat en Tiempo Real</title>
+    <link rel="icon" type="image/x-icon" href="../social_media_social_network_logo_message_logotype_logos_chat_whatsapp_red_icon-icons.com_61223.ico">
+    <link rel="manifest" href="./manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #611f69;
+            --primary-dark: #4a154b;
+            --secondary: #0a5c3d;
+            --bg-light: #f8f8f8;
+            --bg-white: #ffffff;
+            --text-dark: #1d1c1d;
+            --text-light: #616061;
+            --border: #e1e1e1;
+            --hover: #f4ede4;
+            --online: #007a5a;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-light);
+            color: var(--text-dark);
+        }
+        
+        /* Header */
+        .header {
+            background: var(--primary-dark);
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px var(--shadow);
+            z-index: 100;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .workspace-name {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+        
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            background: var(--online);
+            border-radius: 50%;
+            border: 2px solid var(--bg-white);
+        }
+        
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--primary-dark);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        .new-channel-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        
+        .new-channel-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .channels-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+        
+        .channel-item {
+            padding: 6px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 15px;
+        }
+        
+        .channel-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+        
+        .channel-item.active {
+            background: var(--secondary);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .channel-prefix {
+            opacity: 0.7;
+        }
+        
+        /* Chat Area */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-white);
+        }
+        
+        .chat-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-white);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+        }
+        
+        .channel-name {
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+        
+        .channel-desc {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg-white);
+        }
+        
+        .message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background 0.1s;
+        }
+        
+        .message:hover {
+            background: var(--hover);
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .message-content {
+            flex: 1;
+        }
+        
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .message-username {
+            font-weight: 900;
+            font-size: 15px;
+            color: var(--text-dark);
+        }
+        
+        .message-time {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        
+        .message-text {
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--text-dark);
+            word-wrap: break-word;
+        }
+        
+        /* Message Input */
+        .message-input-container {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-white);
+        }
+        
+        .message-input-wrapper {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            background: var(--bg-white);
+            transition: border-color 0.2s;
+        }
+        
+        .message-input-wrapper:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+        
+        #messageInput {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            font-family: inherit;
+            resize: none;
+            max-height: 120px;
+            line-height: 1.5;
+        }
+        
+        .send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .send-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal-title {
+            font-size: 22px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+        
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-dark);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+        
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.4);
+        }
+        
+        .channels-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-light);
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .header-left {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="workspace-name">⚡ SlackwareAlbert</div>
+            <div class="user-badge">
+                <span class="status-indicator"></span>
+                <span id="currentUsername">Usuario</span>
+            </div>
+        </div>
+        <div style="font-size: 12px; opacity: 0.8;" id="appVersion">V1.0.0</div>
+    </div>
+    
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Canales</div>
+                <button class="new-channel-btn" onclick="app.showNewChannelModal()">+ Nuevo Canal</button>
+            </div>
+            <div class="channels-list" id="channelsList">
+                <div class="loading">Cargando canales...</div>
+            </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="channel-name" id="channelName"># general</div>
+                <div class="channel-desc" id="channelDesc">Canal general</div>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <div class="loading">Cargando mensajes...</div>
+            </div>
+            
+            <div class="message-input-container">
+                <div class="message-input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Escribe tu mensaje..." 
+                        rows="1"
+                        onkeydown="app.handleMessageKeydown(event)"
+                    ></textarea>
+                    <button class="send-btn" onclick="app.sendMessage()">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- New Channel Modal -->
+    <div class="modal" id="newChannelModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Crear Nuevo Canal</h2>
+            <form onsubmit="app.createChannel(event)">
+                <div class="form-group">
+                    <label class="form-label" for="channelNameInput">Nombre del Canal</label>
+                    <input 
+                        type="text" 
+                        id="channelNameInput" 
+                        class="form-input" 
+                        placeholder="ej: desarrollo"
+                        required
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="channelDescInput">Descripción</label>
+                    <textarea 
+                        id="channelDescInput" 
+                        class="form-textarea" 
+                        placeholder="Describe el propósito de este canal..."
+                    ></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideNewChannelModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear Canal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
