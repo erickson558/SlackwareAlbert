@@ -26,3 +26,10 @@
 - Incorporado soporte de idiomas (Espanol/Ingles) con selector en UI.
 - Alineado versionado semantico en `VERSION`, `package.json`, `public/version.json`, UI y documentacion.
 
+## V1.1.1 - 2026-03-09
+
+- Agregado `pre-commit` en `.githooks/pre-commit` para exigir version nueva por commit.
+- Nuevo script `scripts/enforce-version-commit.js` para validar sincronizacion de version y changelog.
+- Nuevos comandos npm: `version:check` y `hooks:install`.
+- Documentada la instalacion/uso de hooks en `README.md`.
+

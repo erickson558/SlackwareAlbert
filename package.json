@@ -1,13 +1,15 @@
 {
   "name": "slackwarealbert",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Aplicación de chat estilo Slack en PHP con separación backend/frontend",
   "scripts": {
     "build": "node scripts/build.js",
     "version:patch": "node scripts/version.js patch",
     "version:minor": "node scripts/version.js minor",
-    "version:major": "node scripts/version.js major"
+    "version:major": "node scripts/version.js major",
+    "version:check": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/enforce-version-commit.ps1",
+    "hooks:install": "git config core.hooksPath .githooks"
   },
   "license": "Apache-2.0"
 }

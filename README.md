@@ -2,7 +2,7 @@
 
 Chat estilo Slack con backend PHP (API REST) y frontend JavaScript, con persistencia SQLite.
 
-Version actual: `V1.1.0`
+Version actual: `V1.1.1`
 
 ## Funcionalidades
 
@@ -89,6 +89,26 @@ Comandos:
 npm run version:patch
 npm run version:minor
 npm run version:major
+```
+
+### Bloqueo automatico antes de commit
+
+El repositorio incluye un `pre-commit` en `.githooks/pre-commit` que valida:
+
+- version nueva en `VERSION` (debe cambiar vs `HEAD`)
+- sincronizacion de `VERSION`, `package.json`, `public/version.json`
+- entrada correspondiente en `CHANGELOG.md`
+
+Instalacion local del hook:
+
+```powershell
+npm run hooks:install
+```
+
+Validacion manual:
+
+```powershell
+npm run version:check
 ```
 
 ## Build
